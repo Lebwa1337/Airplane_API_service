@@ -1,5 +1,7 @@
 from django.db.models import F
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from service.models import (
     Country,
@@ -28,7 +30,7 @@ from service.serializers import (
     CityListRetrieveSerializer,
     RouteListRetrieveSerializer,
     FlightListSerializer,
-    FlightDetailSerializer, OrderListSerializer,
+    FlightDetailSerializer, OrderListSerializer, UploadImageSerializer,
 )
 
 
@@ -56,6 +58,19 @@ class AirplaneViewSet(viewsets.ModelViewSet):
         capacity=(F("rows") * F("seats_in_row"))
     )
     serializer_class = AirplaneSerializer
+
+    def get_serializer_class(self):
+        if self.action == "upload_image":
+            return UploadImageSerializer
+        return AirplaneSerializer
+
+    @action(methods=["POST"], detail=True, url_path="upload-image")
+    def upload_image(self, request, pk=None):
+        plane = self.get_object()
+        serializer = self.get_serializer(plane, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class AirportViewSet(viewsets.ModelViewSet):

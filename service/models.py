@@ -1,4 +1,8 @@
+import os
+import uuid
+
 from django.db import models
+from django.utils.text import slugify
 
 from user.models import User
 
@@ -26,11 +30,24 @@ class AirplaneType(models.Model):
         return self.name
 
 
+def create_custom_path(instance, filename):
+    _, extension = os.path.splitext(filename)
+    return os.path.join(
+        "uploads", "img",
+        f"{slugify(instance.name)}-{uuid.uuid4()}{extension}"
+    )
+
+
 class Airplane(models.Model):
     name = models.CharField(max_length=65)
     airplane_type = models.ForeignKey(AirplaneType, on_delete=models.CASCADE, related_name="type")
     rows = models.IntegerField()
     seats_in_row = models.IntegerField()
+    image = models.ImageField(
+        upload_to=create_custom_path,
+        blank=True,
+        null=True
+    )
 
     def __str__(self):
         return f"Airplane {self.name} with capacity {self.rows * self.seats_in_row}"

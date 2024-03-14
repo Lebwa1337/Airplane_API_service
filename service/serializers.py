@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.utils.text import slugify
 from rest_framework import serializers
 
 from service.models import (
@@ -38,13 +39,19 @@ class AirplaneTypeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class UploadImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Airplane
+        fields = ["id", "image"]
+
+
 class AirplaneSerializer(serializers.ModelSerializer):
     airplane_type = serializers.CharField(source='airplane_type.name', read_only=True)
     capacity = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Airplane
-        fields = ["name", "airplane_type", "rows", "seats_in_row", "capacity"]
+        fields = ["name", "airplane_type", "rows", "seats_in_row", "capacity", "image"]
 
 
 class AirportSerializer(serializers.ModelSerializer):
