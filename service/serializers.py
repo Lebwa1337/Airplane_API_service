@@ -46,12 +46,15 @@ class UploadImageSerializer(serializers.ModelSerializer):
 
 
 class AirplaneSerializer(serializers.ModelSerializer):
-    airplane_type = serializers.CharField(source='airplane_type.name', read_only=True)
     capacity = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Airplane
-        fields = ["name", "airplane_type", "rows", "seats_in_row", "capacity", "image"]
+        fields = ["id", "name", "airplane_type", "rows", "seats_in_row", "capacity", "image"]
+
+
+class AirplaneListSerializer(AirplaneSerializer):
+    airplane_type = serializers.CharField(source='airplane_type.name', read_only=True)
 
 
 class AirportSerializer(serializers.ModelSerializer):

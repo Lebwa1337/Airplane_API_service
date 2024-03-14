@@ -30,7 +30,7 @@ from service.serializers import (
     CityListRetrieveSerializer,
     RouteListRetrieveSerializer,
     FlightListSerializer,
-    FlightDetailSerializer, OrderListSerializer, UploadImageSerializer,
+    FlightDetailSerializer, OrderListSerializer, UploadImageSerializer, AirplaneListSerializer,
 )
 
 
@@ -60,6 +60,8 @@ class AirplaneViewSet(viewsets.ModelViewSet):
     serializer_class = AirplaneSerializer
 
     def get_serializer_class(self):
+        if self.action in ["list", "retrieve"]:
+            return AirplaneListSerializer
         if self.action == "upload_image":
             return UploadImageSerializer
         return AirplaneSerializer
