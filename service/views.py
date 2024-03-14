@@ -1,3 +1,4 @@
+from django.db.models import F
 from rest_framework import viewsets
 
 from service.models import (
@@ -22,7 +23,12 @@ from service.serializers import (
     CrewSerializer,
     FlightSerializer,
     TicketSerializer,
-    OrderSerializer
+    OrderSerializer,
+    AirportListRetrieveSerializer,
+    CityListRetrieveSerializer,
+    RouteListRetrieveSerializer,
+    FlightListSerializer,
+    FlightDetailSerializer, OrderListSerializer,
 )
 
 
@@ -33,7 +39,11 @@ class CountryViewSet(viewsets.ModelViewSet):
 
 class CityViewSet(viewsets.ModelViewSet):
     queryset = City.objects.all()
-    serializer_class = CitySerializer
+
+    def get_serializer_class(self):
+        if self.action in ["list", "retrieve"]:
+            return CityListRetrieveSerializer
+        return CitySerializer
 
 
 class AirplaneTypeViewSet(viewsets.ModelViewSet):
@@ -42,18 +52,28 @@ class AirplaneTypeViewSet(viewsets.ModelViewSet):
 
 
 class AirplaneViewSet(viewsets.ModelViewSet):
-    queryset = Airplane.objects.all()
+    queryset = Airplane.objects.all().annotate(
+        capacity=(F("rows") * F("seats_in_row"))
+    )
     serializer_class = AirplaneSerializer
 
 
 class AirportViewSet(viewsets.ModelViewSet):
     queryset = Airport.objects.all()
-    serializer_class = AirportSerializer
+
+    def get_serializer_class(self):
+        if self.action in ["list", "retrieve"]:
+            return AirportListRetrieveSerializer
+        return AirportSerializer
 
 
 class RouteViewSet(viewsets.ModelViewSet):
     queryset = Route.objects.all()
-    serializer_class = RouteSerializer
+
+    def get_serializer_class(self):
+        if self.action in ["list", "retrieve"]:
+            return RouteListRetrieveSerializer
+        return RouteSerializer
 
 
 class CrewViewSet(viewsets.ModelViewSet):
@@ -63,7 +83,13 @@ class CrewViewSet(viewsets.ModelViewSet):
 
 class FlightViewSet(viewsets.ModelViewSet):
     queryset = Flight.objects.all()
-    serializer_class = FlightSerializer
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return FlightListSerializer
+        if self.action == "retrieve":
+            return FlightDetailSerializer
+        return FlightSerializer
 
 
 class TicketViewSet(viewsets.ModelViewSet):
@@ -74,3 +100,13 @@ class TicketViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return OrderListSerializer
+
+        return OrderSerializer
+
