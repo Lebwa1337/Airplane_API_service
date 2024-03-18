@@ -1,7 +1,9 @@
 import os
 import uuid
 
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import UniqueConstraint
 from django.utils.text import slugify
 
 from user.models import User
@@ -104,8 +106,33 @@ class Order(models.Model):
 class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
-    flight = models.ForeignKey(Flight, on_delete=models.CASCADE, related_name="flight_tickets")
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="order_tickets")
+    flight = models.ForeignKey(Flight, on_delete=models.CASCADE, related_name="tickets")
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="tickets")
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=["row", "seat", "flight"], name="unique_tickets"),
+        ]
+
+    @staticmethod
+    def validate_ticket(row, seat, airplane):
+        if not (1 <= row <= airplane.rows):
+            raise ValidationError(f"Incorrect row. Row must be between "
+                                  f"1 and {airplane.rows} for this flight")
+        if not (1 <= seat <= airplane.seats_in_row):
+            raise ValidationError(f"Incorrect seat. Row must be between "
+                                  f"1 and {airplane.seats_in_row} for this flight")
+
+    def clean(self):
+        Ticket.validate_ticket(self.row, self.seat, self.flight.airplane)
+
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
+        self.full_clean()
+        return super(Ticket, self).save(
+            force_insert, force_update, using, update_fields
+        )
 
     def __str__(self):
         return f"Row:{self.row}; Seat:{self.seat}"
