@@ -1,9 +1,11 @@
 from django.db.models import F
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 
 from service.models import (
     Country,
@@ -32,8 +34,15 @@ from service.serializers import (
     CityListRetrieveSerializer,
     RouteListRetrieveSerializer,
     FlightListSerializer,
-    FlightDetailSerializer, OrderListSerializer, UploadImageSerializer, AirplaneListSerializer,
+    FlightDetailSerializer,
+    OrderListSerializer,
+    UploadImageSerializer,
+    AirplaneListSerializer, TicketDetailSerializer,
 )
+
+
+# TODO N+1 (Route + flight)
+# TODO JWT token
 
 
 class CountryViewSet(viewsets.ModelViewSet):
@@ -214,7 +223,6 @@ class RouteViewSet(viewsets.ModelViewSet):
         "source"
     )
 
-    # TODO N+1 (Route + flight)
     def get_queryset(self):
         source_city = self.request.query_params.get("source_city")
         destination_city = self.request.query_params.get("destination_city")
@@ -349,15 +357,35 @@ class FlightViewSet(viewsets.ModelViewSet):
         return FlightSerializer
 
 
-class TicketViewSet(viewsets.ModelViewSet):
+class TicketViewSet(
+    GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin
+):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
 
     def get_queryset(self):
         return self.queryset.filter(order__user=self.request.user)
 
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return TicketDetailSerializer
+        return TicketSerializer
 
-class OrderViewSet(viewsets.ModelViewSet):
+
+class OrderPagination(PageNumberPagination):
+    page_size = 4
+    max_page_size = 100
+
+
+class OrderViewSet(
+    GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.RetrieveModelMixin
+):
     queryset = Order.objects.all().prefetch_related(
         "tickets__flight",
         "tickets__flight__crew",
@@ -366,6 +394,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         "tickets__flight__route__source__closest_city"
     )
     serializer_class = OrderSerializer
+    pagination_class = OrderPagination
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -401,7 +430,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         return self.queryset.filter(user=self.request.user)
 
     def get_serializer_class(self):
-        if self.action == "list":
+        if self.action in ["list", "retrieve"]:
             return OrderListSerializer
 
         return OrderSerializer
