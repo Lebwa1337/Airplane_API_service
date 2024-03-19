@@ -23,7 +23,6 @@ class CountrySerializer(serializers.ModelSerializer):
 
 
 class CitySerializer(serializers.ModelSerializer):
-
     class Meta:
         model = City
         fields = ["name", "population", "country"]
@@ -116,13 +115,18 @@ class FlightDetailSerializer(FlightListSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
+    flight = serializers.StringRelatedField(
+        source="flight.route",
+        read_only=True
+    )
+
     class Meta:
         model = Ticket
         fields = ["id", "seat", "row", "flight"]
 
 
-class TicketListSerializer(TicketSerializer):
-    movie_session = FlightListSerializer(many=False, read_only=True)
+class TicketDetailSerializer(TicketSerializer):
+    flight = FlightDetailSerializer(read_only=True)
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -142,4 +146,4 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderListSerializer(OrderSerializer):
-    tickets = TicketListSerializer(many=True, read_only=True)
+    tickets = TicketSerializer(many=True, read_only=True)
