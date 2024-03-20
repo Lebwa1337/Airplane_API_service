@@ -1,4 +1,4 @@
-from django.db.models import F
+from django.db.models import F, Count
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets, status, mixins
@@ -262,7 +262,10 @@ class CrewViewSet(viewsets.ModelViewSet):
 
 
 class FlightViewSet(viewsets.ModelViewSet):
-    queryset = Flight.objects.prefetch_related("crew")
+    queryset = Flight.objects.prefetch_related("crew").annotate(
+        tickets_available=(F("airplane__rows") * F("airplane__seats_in_row")
+                           - Count("tickets"))
+    )
 
     @extend_schema(
         parameters=[

@@ -49,7 +49,15 @@ class AirplaneSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Airplane
-        fields = ["id", "name", "airplane_type", "rows", "seats_in_row", "capacity", "image"]
+        fields = [
+            "id",
+            "name",
+            "airplane_type",
+            "rows",
+            "seats_in_row",
+            "capacity",
+            "image"
+        ]
 
 
 class AirplaneListSerializer(AirplaneSerializer):
@@ -98,6 +106,34 @@ class CrewSerializer(serializers.ModelSerializer):
 
 
 class FlightSerializer(serializers.ModelSerializer):
+    tickets_available = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Flight
+        fields = [
+            "id",
+            "departure_time",
+            "arrival_time",
+            "route",
+            "airplane",
+            "tickets_available"
+        ]
+
+
+class FlightListSerializer(FlightSerializer):
+    route = RouteListRetrieveSerializer(read_only=True)
+    airplane = serializers.CharField(source="airplane.name", read_only=True)
+
+
+class FlightDetailSerializer(FlightListSerializer):
+    airplane = AirplaneSerializer(read_only=True)
+    route = RouteListRetrieveSerializer(read_only=True)
+    crew = serializers.SlugRelatedField(
+        many=True,
+        slug_field="full_name",
+        read_only=True
+    )
+
     class Meta:
         model = Flight
         fields = [
@@ -108,21 +144,6 @@ class FlightSerializer(serializers.ModelSerializer):
             "airplane",
             "crew"
         ]
-
-
-class FlightListSerializer(FlightSerializer):
-    route = RouteListRetrieveSerializer(read_only=True)
-    airplane = serializers.CharField(source="airplane.name", read_only=True)
-    crew = serializers.SlugRelatedField(
-        many=True,
-        slug_field="full_name",
-        read_only=True
-    )
-
-
-class FlightDetailSerializer(FlightListSerializer):
-    airplane = AirplaneSerializer(read_only=True)
-    route = RouteListRetrieveSerializer(read_only=True)
 
 
 class TicketSerializer(serializers.ModelSerializer):
