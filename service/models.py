@@ -52,7 +52,7 @@ class Airplane(models.Model):
     )
 
     def __str__(self):
-        return f"Airplane {self.name} with capacity {self.rows * self.seats_in_row}"
+        return self.name
 
 
 class Airport(models.Model):
@@ -60,7 +60,7 @@ class Airport(models.Model):
     closest_city = models.ForeignKey(City, on_delete=models.CASCADE, related_name="airports")
 
     def __str__(self):
-        return f"Airport {self.name} with nearby city:{self.closest_city}"
+        return self.name
 
 
 class Route(models.Model):
@@ -69,8 +69,7 @@ class Route(models.Model):
     distance = models.IntegerField()
 
     def __str__(self):
-        return (f"Flight from {self.source.closest_city.name} "
-                f"to {self.destination.closest_city.name}")
+        return f"{self.distance}"
 
 
 class Crew(models.Model):
@@ -93,9 +92,8 @@ class Flight(models.Model):
     arrival_time = models.DateTimeField()
 
     def __str__(self):
-        return (f"{self.route},"
-                f"departure time: {self.departure_time},"
-                f"arrival time: {self.arrival_time}")
+        return (f"{self.departure_time},"
+                f"{self.arrival_time}")
 
 
 class Order(models.Model):
