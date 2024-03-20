@@ -219,8 +219,9 @@ class AirportViewSet(viewsets.ModelViewSet):
 
 
 class RouteViewSet(viewsets.ModelViewSet):
-    queryset = Route.objects.all().prefetch_related(
-        "source"
+    queryset = Route.objects.select_related(
+        "source__closest_city",
+        "destination__closest_city"
     )
 
     def get_queryset(self):
@@ -261,11 +262,7 @@ class CrewViewSet(viewsets.ModelViewSet):
 
 
 class FlightViewSet(viewsets.ModelViewSet):
-    queryset = Flight.objects.all().select_related(
-        "route",
-        "airplane",
-        "route__source"
-    ).prefetch_related("crew")
+    queryset = Flight.objects.prefetch_related("crew")
 
     @extend_schema(
         parameters=[
@@ -362,7 +359,9 @@ class TicketViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin
 ):
-    queryset = Ticket.objects.all()
+    queryset = Ticket.objects.prefetch_related(
+        "flight__route__source__closest_city"
+    )
     serializer_class = TicketSerializer
 
     def get_queryset(self):
