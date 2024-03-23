@@ -84,7 +84,7 @@ WSGI_APPLICATION = "airplane_service.wsgi.application"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
+    "default": {
         'ENGINE': 'django.db.backends.postgresql',
         'HOST': os.environ.get('POSTGRES_HOST'),
         'NAME': os.environ.get('POSTGRES_DB'),
