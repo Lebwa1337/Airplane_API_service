@@ -126,7 +126,7 @@ class FlightListSerializer(FlightSerializer):
 
 
 class FlightDetailSerializer(FlightListSerializer):
-    airplane = AirplaneSerializer(read_only=True)
+    airplane = AirplaneListSerializer(read_only=True)
     route = RouteListRetrieveSerializer(read_only=True)
     crew = serializers.SlugRelatedField(
         many=True,
