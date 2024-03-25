@@ -10,16 +10,29 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from service.models import AirplaneType, Airplane, Country, City, Route, Crew, Flight, Airport, Ticket, Order
-from service.serializers import AirplaneListSerializer, FlightSerializer, FlightListSerializer, FlightDetailSerializer
+from service.models import (
+    AirplaneType,
+    Airplane,
+    Country,
+    City,
+    Route,
+    Crew,
+    Flight,
+    Airport,
+    Ticket,
+    Order,
+)
+from service.serializers import (
+    FlightSerializer,
+    FlightListSerializer,
+    FlightDetailSerializer,
+)
 
 AIRPLANE_URL = reverse("service:airplane-list")
 
 
 def sample_airplane_type(**params):
-    defaults ={
-        "name": "test_airplane_type"
-    }
+    defaults = {"name": "test_airplane_type"}
     defaults.update(params)
     return AirplaneType.objects.create(**defaults)
 
@@ -39,28 +52,20 @@ def sample_city(**params):
     defaults = {
         "name": "test_city",
         "population": 100,
-        "country": Country.objects.create(
-            name="test_country"
-        )
+        "country": Country.objects.create(name="test_country"),
     }
     defaults.update(params)
     return City.objects.create(**defaults)
 
 
 def sample_airport(**params):
-    defaults = {
-        "name": "test_airport",
-        "closest_city": sample_city()
-    }
+    defaults = {"name": "test_airport", "closest_city": sample_city()}
     defaults.update(params)
     return Airport.objects.create(**defaults)
 
 
 def image_upload_url(airplane_id):
-    return reverse(
-        "service:airplane-upload-image",
-        args=[airplane_id]
-    )
+    return reverse("service:airplane-upload-image", args=[airplane_id])
 
 
 def airplane_detail_url(airplane_id):
@@ -138,40 +143,30 @@ class AuthenticatedAirplaneApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
-            "test@test.com",
-            "testpassword123"
+            "test@test.com", "testpassword123"
         )
         self.client.force_authenticate(self.user)
 
         self.route = Route.objects.create(
-            source=sample_airport(),
-            destination=sample_airport(),
-            distance=5000
+            source=sample_airport(), destination=sample_airport(), distance=5000
         )
         self.airplane = sample_airplane()
-        self.crew = Crew.objects.create(
-            first_name="test_f",
-            last_name="test_l"
-        )
+        self.crew = Crew.objects.create(first_name="test_f", last_name="test_l")
         self.flight = Flight.objects.create(
             route=self.route,
             airplane=self.airplane,
             departure_time=datetime.now(),
-            arrival_time=datetime.now()
+            arrival_time=datetime.now(),
         )
         self.flight.crew.add(self.crew)
 
     def test_list_flight(self):
         order = Order.objects.create(user=self.user)
-        Ticket.objects.create(
-            flight=self.flight,
-            row=10,
-            seat=10,
-            order=order
-        )
+        Ticket.objects.create(flight=self.flight, row=10, seat=10, order=order)
         flights = Flight.objects.all().annotate(
-            tickets_available=(F("airplane__rows") * F("airplane__seats_in_row")
-                               - Count("tickets"))
+            tickets_available=(
+                F("airplane__rows") * F("airplane__seats_in_row") - Count("tickets")
+            )
         )
         res = self.client.get(reverse("service:flight-list"))
         serializer = FlightListSerializer(flights, many=True)
@@ -183,36 +178,31 @@ class AuthenticatedAirplaneApiTests(TestCase):
             route=self.route,
             airplane=self.airplane,
             departure_time=datetime(2024, 2, 15, 10, 30, 0),
-            arrival_time=datetime(2024, 2, 16, 11, 35, 0)
+            arrival_time=datetime(2024, 2, 16, 11, 35, 0),
         )
         flight1.crew.add(self.crew)
         order = Order.objects.create(user=self.user)
-        Ticket.objects.create(
-            flight=flight1,
-            row=10,
-            seat=10,
-            order=order
-        )
+        Ticket.objects.create(flight=flight1, row=10, seat=10, order=order)
         flight2 = Flight.objects.create(
             route=self.route,
             airplane=self.airplane,
             departure_time=datetime(2023, 5, 10, 15, 50, 0),
-            arrival_time=datetime(2023, 5, 1, 16, 55, 0)
+            arrival_time=datetime(2023, 5, 1, 16, 55, 0),
         )
         flight2.crew.add(self.crew)
         order = Order.objects.create(user=self.user)
-        Ticket.objects.create(
-            flight=flight2,
-            row=10,
-            seat=10,
-            order=order
+        Ticket.objects.create(flight=flight2, row=10, seat=10, order=order)
+        flights = (
+            Flight.objects.all()
+            .annotate(
+                tickets_available=(
+                    F("airplane__rows") * F("airplane__seats_in_row") - Count("tickets")
+                )
+            )
+            .filter(departure_time__date="2024-02-15")
         )
-        flights = Flight.objects.all().annotate(
-            tickets_available=(F("airplane__rows") * F("airplane__seats_in_row")
-                               - Count("tickets"))
-        ).filter(departure_time__date="2024-02-15")
-        query_res = self.client.get(reverse(
-            "service:flight-list"), {"dep_date": "2024-02-15"}
+        query_res = self.client.get(
+            reverse("service:flight-list"), {"dep_date": "2024-02-15"}
         )
         serializer1 = FlightListSerializer(flights, many=True)
         serializer2 = FlightSerializer(flight2)
@@ -226,36 +216,31 @@ class AuthenticatedAirplaneApiTests(TestCase):
             route=self.route,
             airplane=self.airplane,
             departure_time=datetime(2024, 2, 15, 10, 30, 0),
-            arrival_time=datetime(2024, 2, 16, 11, 35, 0)
+            arrival_time=datetime(2024, 2, 16, 11, 35, 0),
         )
         flight1.crew.add(self.crew)
         order = Order.objects.create(user=self.user)
-        Ticket.objects.create(
-            flight=flight1,
-            row=10,
-            seat=10,
-            order=order
-        )
+        Ticket.objects.create(flight=flight1, row=10, seat=10, order=order)
         flight2 = Flight.objects.create(
             route=self.route,
             airplane=self.airplane,
             departure_time=datetime(2023, 5, 10, 15, 50, 0),
-            arrival_time=datetime(2023, 5, 1, 16, 55, 0)
+            arrival_time=datetime(2023, 5, 1, 16, 55, 0),
         )
         flight2.crew.add(self.crew)
         order = Order.objects.create(user=self.user)
-        Ticket.objects.create(
-            flight=flight2,
-            row=10,
-            seat=10,
-            order=order
+        Ticket.objects.create(flight=flight2, row=10, seat=10, order=order)
+        flights = (
+            Flight.objects.all()
+            .annotate(
+                tickets_available=(
+                    F("airplane__rows") * F("airplane__seats_in_row") - Count("tickets")
+                )
+            )
+            .filter(arrival_time__date="2024-02-16")
         )
-        flights = Flight.objects.all().annotate(
-            tickets_available=(F("airplane__rows") * F("airplane__seats_in_row")
-                               - Count("tickets"))
-        ).filter(arrival_time__date="2024-02-16")
-        query_res = self.client.get(reverse(
-            "service:flight-list"), {"arr_date": "2024-02-16"}
+        query_res = self.client.get(
+            reverse("service:flight-list"), {"arr_date": "2024-02-16"}
         )
         serializer1 = FlightListSerializer(flights, many=True)
         serializer2 = FlightSerializer(flight2)
@@ -267,12 +252,7 @@ class AuthenticatedAirplaneApiTests(TestCase):
     def test_flight_retrieve(self):
 
         order = Order.objects.create(user=self.user)
-        Ticket.objects.create(
-            flight=self.flight,
-            row=10,
-            seat=10,
-            order=order
-        )
+        Ticket.objects.create(flight=self.flight, row=10, seat=10, order=order)
         flights = Flight.objects.first()
 
         res = self.client.get(reverse("service:flight-detail", args=[flights.id]))
@@ -281,17 +261,7 @@ class AuthenticatedAirplaneApiTests(TestCase):
         self.assertEqual(res.data, serializer.data)
 
     def test_create_ticket_forbidden(self):
-        order = Order.objects.create(
-            user=self.user
-        )
-        payload = {
-            "flight": self.flight,
-            "row": 10,
-            "seat": 10,
-            "order": order
-        }
-        res = self.client.post(
-            reverse("service:ticket-list"),
-            payload
-        )
+        order = Order.objects.create(user=self.user)
+        payload = {"flight": self.flight, "row": 10, "seat": 10, "order": order}
+        res = self.client.post(reverse("service:ticket-list"), payload)
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
