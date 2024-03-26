@@ -64,8 +64,8 @@ class Airport(models.Model):
 
 
 class Route(models.Model):
-    source = models.ForeignKey(Airport, on_delete=models.CASCADE, related_name="Routes")
-    destination = models.ForeignKey(Airport, on_delete=models.CASCADE, related_name="Routes")
+    source = models.ForeignKey(Airport, on_delete=models.CASCADE, related_name="source_routes")
+    destination = models.ForeignKey(Airport, on_delete=models.CASCADE, related_name="destination_routes")
     distance = models.IntegerField()
 
     def __str__(self):
