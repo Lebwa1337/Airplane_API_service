@@ -1,2 +1,7 @@
-.idea
 .venv
+.idea/
+db.sqlite3
+uploads/
+media
+/uploads/
+/.env
