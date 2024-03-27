@@ -48,11 +48,12 @@ class CountryViewSet(viewsets.ModelViewSet):
     serializer_class = CountrySerializer
 
     def get_queryset(self):
+        queryset = super().get_queryset()
         name = self.request.query_params.get("name")
 
         if name:
-            return Country.objects.filter(name__icontains=name)
-        return self.queryset
+            queryset = queryset.filter(name__icontains=name)
+        return queryset
 
     @extend_schema(
         parameters=[
@@ -76,13 +77,14 @@ class CityViewSet(viewsets.ModelViewSet):
         return CitySerializer
 
     def get_queryset(self):
+        queryset = super().get_queryset()
         city_name = self.request.query_params.get("city_name")
         country = self.request.query_params.get("country")
         if city_name:
-            return City.objects.filter(name__icontains=city_name)
+            queryset = queryset.filter(name__icontains=city_name)
         if country:
-            return City.objects.filter(country__name__icontains=country)
-        return self.queryset
+            queryset = queryset.filter(country__name__icontains=country)
+        return queryset
 
     @extend_schema(
         parameters=[
@@ -107,10 +109,11 @@ class AirplaneTypeViewSet(viewsets.ModelViewSet):
     serializer_class = AirplaneTypeSerializer
 
     def get_queryset(self):
+        queryset = super().get_queryset()
         name = self.request.query_params.get("name")
         if name:
-            return AirplaneType.objects.filter(name__icontains=name)
-        return self.queryset
+            queryset = queryset.filter(name__icontains=name)
+        return queryset
 
     @extend_schema(
         parameters=[
@@ -139,16 +142,17 @@ class AirplaneViewSet(viewsets.ModelViewSet):
         return AirplaneSerializer
 
     def get_queryset(self):
+        queryset = super().get_queryset()
         name = self.request.query_params.get("name")
         airplane_type = self.request.query_params.get("type")
         capacity = self.request.query_params.get("capacity")
         if name:
-            self.queryset = self.queryset.filter(name__icontains=name)
+            queryset = queryset.filter(name__icontains=name)
         if airplane_type:
-            self.queryset = self.queryset.filter(airplane_type__name__icontains=airplane_type)
+            queryset = queryset.filter(airplane_type__name__icontains=airplane_type)
         if capacity:
-            self.queryset = self.queryset.filter(capacity__lte=capacity)
-        return self.queryset
+            queryset = queryset.filter(capacity__lte=capacity)
+        return queryset
 
     @action(
         methods=["POST"],
@@ -190,13 +194,14 @@ class AirportViewSet(viewsets.ModelViewSet):
     queryset = Airport.objects.all().select_related("closest_city")
 
     def get_queryset(self):
+        queryset = super().get_queryset()
         name = self.request.query_params.get("name")
         closest_city = self.request.query_params.get("city")
         if name:
-            self.queryset = self.queryset.filter(name__icontains=name)
+            queryset = queryset.filter(name__icontains=name)
         if closest_city:
-            self.queryset = self.queryset.filter(closest_city__name__icontains=closest_city)
-        return self.queryset
+            queryset = queryset.filter(closest_city__name__icontains=closest_city)
+        return queryset
 
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"]:
@@ -228,13 +233,14 @@ class RouteViewSet(viewsets.ModelViewSet):
     )
 
     def get_queryset(self):
+        queryset = super().get_queryset()
         source_city = self.request.query_params.get("source_city")
         destination_city = self.request.query_params.get("destination_city")
         if source_city:
-            self.queryset = self.queryset.filter(source__closest_city__name__icontains=source_city)
+            queryset = queryset.filter(source__closest_city__name__icontains=source_city)
         if destination_city:
-            self.queryset = self.queryset.filter(destination__closest_city__name__icontains=destination_city)
-        return self.queryset
+            queryset = queryset.filter(destination__closest_city__name__icontains=destination_city)
+        return queryset
 
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"]:
@@ -318,6 +324,7 @@ class FlightViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
+        queryset = super().get_queryset()
         dep_date = self.request.query_params.get("dep_date")
         dep_hour = self.request.query_params.get("dep_hour")
         dep_minute = self.request.query_params.get("dep_minute")
@@ -329,28 +336,28 @@ class FlightViewSet(viewsets.ModelViewSet):
         s_route = self.request.query_params.get("s_route")
         d_route = self.request.query_params.get("d_route")
         if dep_date:
-            self.queryset = self.queryset.filter(departure_time__date=dep_date)
+            queryset = queryset.filter(departure_time__date=dep_date)
         if dep_hour:
-            self.queryset = self.queryset.filter(departure_time__hour=dep_hour)
+            queryset = queryset.filter(departure_time__hour=dep_hour)
         if dep_minute:
-            self.queryset = self.queryset.filter(departure_time__minute=dep_minute)
+            queryset = queryset.filter(departure_time__minute=dep_minute)
 
         if arr_date:
-            self.queryset = self.queryset.filter(arrival_time__date=arr_date)
+            queryset = queryset.filter(arrival_time__date=arr_date)
         if arr_hour:
-            self.queryset = self.queryset.filter(arrival_time__hour=arr_hour)
+            queryset = queryset.filter(arrival_time__hour=arr_hour)
         if arr_minute:
-            self.queryset = self.queryset.filter(arrival_time__minute=arr_minute)
+            queryset = queryset.filter(arrival_time__minute=arr_minute)
 
         if s_route:
-            self.queryset = self.queryset.filter(
+            queryset = queryset.filter(
                 route__source__closest_city__name__icontains=s_route
             )
         if d_route:
-            self.queryset = self.queryset.filter(
+            queryset = queryset.filter(
                 route__destination__closest_city__name__icontains=d_route
             )
-        return self.queryset
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -371,7 +378,8 @@ class TicketViewSet(
     serializer_class = TicketSerializer
 
     def get_queryset(self):
-        return self.queryset.filter(order__user=self.request.user)
+        queryset = super().get_queryset()
+        return queryset.filter(order__user=self.request.user)
 
     def get_serializer_class(self):
         if self.action == "retrieve":
@@ -423,17 +431,18 @@ class OrderViewSet(
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
+        queryset = super().get_queryset()
         s_route = self.request.query_params.get("s_route")
         d_route = self.request.query_params.get("d_route")
         if s_route:
-            self.queryset = self.queryset.filter(
+            queryset = queryset.filter(
                 tickets__flight__route__source__closest_city__name__icontains=s_route
             )
         if d_route:
-            self.queryset = self.queryset.filter(
+            queryset = queryset.filter(
                 tickets__flight__route__destination__closest_city__name__icontains=d_route
             )
-        return self.queryset.filter(user=self.request.user)
+        return queryset.filter(user=self.request.user)
 
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"]:
